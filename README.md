@@ -34,9 +34,9 @@
 
 ## 🌟 Overview
 
-**GAPLER (Career Market-Aligned Syllabus)** is an intelligent educational planning system that bridges the gap between academic curricula and real-world job market requirements. Using a sophisticated multi-agent AI architecture, GAPLER analyzes current industry trends, researches job market demands, and generates comprehensive course plans that prepare students for actual career opportunities.
+**AlignEd (Career Market-Aligned Syllabus)** is an intelligent educational planning system that bridges the gap between academic curricula and real-world job market requirements. Using a sophisticated multi-agent AI architecture, GAPLER analyzes current industry trends, researches job market demands, and generates comprehensive course plans that prepare students for actual career opportunities.
 
-### Why GAPLER?
+### Why AlignEd?
 
 - **Market-Driven**: Automatically researches current job requirements and industry trends
 - **AI-Powered**: Multi-agent system with specialized roles (Market Research, Curriculum Design, Quality Assurance)
