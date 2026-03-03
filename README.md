@@ -34,7 +34,7 @@
 
 ## 🌟 Overview
 
-**AlignEd (Career Market-Aligned Syllabus)** is an intelligent educational planning system that bridges the gap between academic curricula and real-world job market requirements. Using a sophisticated multi-agent AI architecture, GAPLER analyzes current industry trends, researches job market demands, and generates comprehensive course plans that prepare students for actual career opportunities.
+**AlignEd (Career Market-Aligned Syllabus)** is an intelligent educational planning system that bridges the gap between academic curricula and real-world job market requirements. Using a sophisticated multi-agent AI architecture, AlignEd analyzes current industry trends, researches job market demands, and generates comprehensive course plans that prepare students for actual career opportunities.
 
 ### Why AlignEd?
 
@@ -135,7 +135,7 @@
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/GAPLER-course-generator.git
+git clone https://github.com/yourusername/AlignEd-course-generator.git
 cd GAPLER-course-generator
 ```
 
