@@ -1,4 +1,4 @@
-# 🎓 GAPLER: Career Market-Aligned Syllabus Generator
+# 🎓 AlignEd: Career Market-Aligned Syllabus Generator
 
 <div align="center">
 
