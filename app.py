@@ -21,7 +21,7 @@ if "GROQ_API_KEY" not in os.environ:
     st.error("🚨 GROQ_API_KEY is missing! Please set it in .env or .streamlit/secrets.toml")
     st.stop()
 
-st.set_page_config(page_title="GAPLER - RAG Course Generator", layout="wide", page_icon="🎓")
+st.set_page_config(page_title="AlignEd - RAG Course Generator", layout="wide", page_icon="🎓")
 
 UI = {
     "sb_guide_title": "📖 Quick Guide",
@@ -36,7 +36,7 @@ UI = {
     "method_pdf": "Fast Mode (Target Spec PDF)",
 
     # Headers
-    "header_title": "🚀 GAPLER: AI-Powered Curriculum",
+    "header_title": "🚀 AlignEd: AI-Powered Curriculum",
     "header_caption": "Generate market-aligned syllabi grounded in YOUR reference materials.",
 
     # Form Labels (Standard)
@@ -52,7 +52,7 @@ UI = {
     "lbl_context": "Industry Focus",
 
     # Actions
-    "btn_gen": "✨ Generate RAG-Enhanced Plan",
+    "btn_gen": "✨ Generate Plan",
     "btn_auto": "✨ Auto-Complete",
     "err_fill": "⚠️ Please fill in Subject and Objectives.",
     "status_init": "🤖 AI Agents are working...",

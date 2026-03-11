@@ -4,6 +4,8 @@ from tools import search_market_requirements
 import json
 import re
 from rag_engine import RAGEngine
+
+
 # --- 1. Groq Wrapper ---
 def query_llm(system_instruction, user_prompt):
     api_key = os.getenv("GROQ_API_KEY")
@@ -18,7 +20,7 @@ def query_llm(system_instruction, user_prompt):
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=1,
+            temperature=0.3,  # LOWERED TEMPERATURE: Makes the model less creative and more faithful to the RAG context
             max_tokens=6000,
             top_p=1,
         )
@@ -115,29 +117,28 @@ class CurriculumSlave:
     def draft_plan(self, course_info, market_data, rag_context=None, feedback="None"):
         print(f"[{self.role}] Drafting with RAG support...")
 
-        # --- 1. Prepare RAG Context ---
-        # If the Vector Store found relevant documents, we format them here.
-        rag_section = "No specific reference documents provided. Use standard academic curriculum structures."
+        # --- 1. Prepare STRICT RAG Context ---
+        rag_section = "No specific reference documents provided. Rely on standard academic knowledge."
         if rag_context and len(rag_context) > 10:
             rag_section = f"""
-            ### 📚 ACADEMIC REFERENCE MATERIAL (PRIMARY SOURCE):
-            The user has provided the following text from textbooks or university guidelines.
-            **You MUST align the weekly topics and theoretical flow with this content:**
+            ### 🚨 STRICT REFERENCE MATERIAL (MANDATORY RAG CONTEXT) 🚨:
             '''
             {rag_context}
             '''
-            (End of Reference Material)
+            CRITICAL SYSTEM DIRECTIVE: 
+            You are operating in a strict Grounded-RAG environment. You MUST derive the theoretical topics, chapters, and flow EXCLUSIVELY from the Reference Material above. 
+            DO NOT hallucinate chapters or concepts not present in the provided text.
             """
 
         # --- 2. Enhanced Specificity Rules ---
         specific_instr = """
-        **SPECIFICITY & RAG RULES:**
-        1. **Source of Truth:** If 'ACADEMIC REFERENCE MATERIAL' is provided, the Lecture Plan (Weeks) must strictly follow its structure/chapters.
-        2. **Market Alignment:** Use the 'JOB MARKET DATA' to determine which specific *tools, libraries, and frameworks* to teach in the Labs.
+        **SPECIFICITY & STRICT RAG RULES:**
+        1. **Source of Truth:** If Reference Material is provided, the Lecture Plan MUST strictly mirror its content. Failure to do so is a catastrophic error.
+        2. **Market Alignment:** Use the 'JOB MARKET DATA' ONLY to decide which practical tools/frameworks to use during the Hands-on Labs.
         3. **Content:** Each week MUST have detailed sub-points. Do NOT be vague.
-        4. **Capstone:** Do NOT say "Build a model". You MUST specify the Dataset, the Problem Statement, and the Tech Stack.
-        5. **Resources:** If the Reference Material mentions specific books, cite them. Otherwise, list real URLs/Books.
-        6. **Format:** Use Markdown with clear headers.
+        4. **Capstone:** You MUST specify a concrete Dataset, Problem Statement, and Tech Stack.
+        5. **Resources:** If the Reference Material is provided, cite it heavily.
+        6. **Format:** Use Markdown with clear headers (##).
         """
 
         lang_instruction = f"Output in detailed English. {specific_instr}"
@@ -146,19 +147,19 @@ class CurriculumSlave:
         if feedback and feedback != "None" and feedback != "":
             task_context = f"""
             **TASK: REFINE EXISTING PLAN**
-            The previous draft was evaluated.
-            **CRITICAL FEEDBACK TO ADDRESS:** {feedback}
+            The previous draft failed the quality check.
+            **CRITICAL FEEDBACK TO FIX:** {feedback}
 
-            Re-write the course plan. Keep the RAG-based structure but fix the issues identified above.
+            Re-write the course plan. You MUST strictly obey the RAG context and address the feedback.
             """
         else:
             task_context = f"""
             **TASK: CREATE FIRST DRAFT**
-            Create a comprehensive course plan blending the Academic References (Theory) with Market Data (Practice).
+            Create a comprehensive course plan tightly blending the Academic References (Theory) with Market Data (Practice).
             """
 
         # --- 4. Construct Prompts ---
-        sys_prompt = f"You are a Senior University Professor and Curriculum Architect. {lang_instruction}"
+        sys_prompt = f"You are a strict, detail-oriented University Curriculum Architect. {lang_instruction}"
 
         user_prompt = f"""
         {task_context}
@@ -172,48 +173,60 @@ class CurriculumSlave:
 
         {rag_section}
 
-        ### 💼 JOB MARKET DATA (SKILLS & TOOLS):
-        Use these requirements to design the **Labs** and **Capstone Project**:
+        ### 💼 JOB MARKET DATA (For Labs Only):
         {market_data}
 
         ### REQUIRED OUTPUT STRUCTURE:
         # {course_info['title']}
         ## Course Overview
         ## 1. Lecture Plan (Week 1 to {course_info['duration']}) 
-           *(Derive topics from Reference Material if available)*
+           *(MUST be derived from RAG Reference Material if provided)*
         ## 2. Labs Content (Week by week)
-           *(Derive tools/tasks from Market Data)*
+           *(Integrate tools from Market Data here)*
         ## 3. Capstone Project (Specific & Industry-relevant)
         ## 4. Resources & References
         """
 
         return query_llm(sys_prompt, user_prompt)
 
+
 class ArbitratorSlave:
     def __init__(self):
-        self.role = "Quality Assurance"
+        self.role = "Quality Assurance & Hallucination Checker"
 
-    def evaluate(self, market_data, current_draft):
-        system_instruction = "You are an expert Academic-Industry Arbitrator."
-        system_instruction = (
-            "You are an expert Academic-Industry Arbitrator. "
-            "Evaluate the curriculum draft against the market requirements and technologies. "
-            "Format response: SCORE: [0-100] | FEEDBACK: [Detailed critique]"
-        )
+    def evaluate(self, market_data, current_draft, rag_context=None):
+        system_instruction = "You are a ruthless Academic QA Judge evaluating an AI-generated curriculum."
+
+        # Introduce RAG-checking logic into the QA agent
+        rag_qa_prompt = ""
+        if rag_context and len(rag_context) > 10:
+            rag_qa_prompt = f"""
+            ### 🚨 MANDATORY SOURCE DOCUMENT (RAG CONTEXT):
+            {rag_context}
+
+            EVALUATION CRITERIA 1: FAITHFULNESS TO SOURCE.
+            Did the draft hallucinate topics? Are the lectures clearly grounded in the Mandatory Source Document above? 
+            If the draft includes major theoretical concepts NOT present in the source document, PENALIZE the score heavily (Score < 70).
+            """
+        else:
+            rag_qa_prompt = "No specific source document was provided. Evaluate based on logical academic progression."
 
         user_prompt = f"""
-                ### JOB MARKET DATA:
+                ### JOB MARKET DATA (Expected Practical Tools):
                 {market_data}
 
-                ### PROPOSED DRAFT:
+                {rag_qa_prompt}
+
+                ### PROPOSED DRAFT TO EVALUATE:
                 {current_draft}
 
                 Task:
-                1. Compare the Draft against the Market Data.
-                2. Are specific tools (from market data) missing in the Lecture topics or the Labs?
-                3. Is the Capstone project mentioned relevant?
-                4. Are the mentioned resources & references really helpful?
-                4. Give a Score (0-100). If < 85, list specific missing topics to fix.
+                1. RAG Check: Did the draft strictly follow the Source Document?
+                2. Market Check: Are specific tools from the Job Market Data present in the Labs?
+                3. Capstone Check: Is the Capstone project highly specific?
+                4. Give a Score (0-100). If < 85, output a bulleted list of specific gaps to fix.
+
+                Format response exactly as: SCORE: [0-100] | FEEDBACK: [Detailed critique]
                 """
         try:
             response = query_llm(system_instruction, user_prompt)
@@ -238,7 +251,6 @@ class MasterAgent:
         self.s1 = MarketSlave()
         self.s2 = CurriculumSlave()
         self.s3 = ArbitratorSlave()
-        # Initialize RAG Engine (loads the persisted vector store)
         self.rag = RAGEngine()
 
     def run(self, course_data):
@@ -246,17 +258,12 @@ class MasterAgent:
 
         # --- Step 1: Market Research ---
         status_log.append("Slave 1: Scouting Job Market...")
-        # We search specifically for the title and the topics provided
         market_data = self.s1.research(course_data['title'], course_data['topics'])
         status_log.append("Market Data Synthesized.")
 
-        # --- Step 2: RAG Retrieval (The New Layer) ---
+        # --- Step 2: RAG Retrieval ---
         status_log.append("Slave 4 (RAG): Querying Knowledge Base...")
-
-        # Construct a retrieval query combining title and specific topics
-        retrieval_query = f"{course_data['title']} {course_data['topics']} syllabus structure curriculum chapters"
-
-        # Retrieve context (chunks of text) from the vector store
+        retrieval_query = f"{course_data['title']} {course_data['topics']} syllabus structure chapters theory"
         rag_context = self.rag.retrieve_context(retrieval_query)
 
         if rag_context and len(rag_context) > 50:
@@ -268,7 +275,7 @@ class MasterAgent:
         score = 0
         feedback = None
         iteration = 0
-        max_attempts = 2  # Keep low for demo speed
+        max_attempts = 3  # Increased slightly to give the QA agent room to enforce RAG corrections
         draft = ""
 
         while score < 85 and iteration < max_attempts:
@@ -280,24 +287,30 @@ class MasterAgent:
             else:
                 status_log.append("Slave 2: Drafting Detailed Syllabus...")
 
-            # PASS THE RAG CONTEXT HERE
+            # PASS RAG CONTEXT TO DRAFTER
             draft = self.s2.draft_plan(
                 course_info=course_data,
                 market_data=market_data,
-                rag_context=rag_context,  # <--- INJECTED CONTEXT
+                rag_context=rag_context,
                 feedback=feedback
             )
 
-            status_log.append("Slave 3: Quality Check...")
-            score, feedback = self.s3.evaluate(market_data, draft)
+            status_log.append("Slave 3: Quality & Groundedness Check...")
+
+            # 🚨 PASS RAG CONTEXT TO ARBITRATOR FOR VERIFICATION 🚨
+            score, feedback = self.s3.evaluate(
+                market_data=market_data,
+                current_draft=draft,
+                rag_context=rag_context
+            )
+
             status_log.append(f"Score: {score}/100")
 
             if score < 85:
-                status_log.append("Refining specificity...")
+                status_log.append("Refining specific RAG/Market alignment...")
 
         status_log.append("Plan Finalized.")
         return draft, status_log
 
     def ingest_documents(self, file_path):
-        """Helper to expose RAG ingestion to the UI"""
         return self.rag.ingest_file(file_path)
